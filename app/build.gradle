@@ -6,10 +6,8 @@ ext {
     // The packageVariant defines the bootstrap variant that will be included in the app APK.
     // This must be supported by com.termux.shared.termux.TermuxBootstrap.PackageVariant or app will
     // crash at startup.
-    // Bootstrap of a different variant must not be manually installed by the user after app installation
-    // by replacing $PREFIX since app code is dependant on the variant used to build the APK.
-    // Currently supported values are: [ "apt-android-7" "apt-android-5" ]
-    packageVariant = System.getenv("TERMUX_PACKAGE_VARIANT") ?: "apt-android-7" // Default: "apt-android-7"
+    // The only supported value is "apt.android-7".
+    packageVariant = System.getenv("TERMUX_PACKAGE_VARIANT") ?: "apt.android-7" // Default: "apt.android-7"
 }
 
 android {
@@ -161,23 +159,15 @@ def validateVersionName(String versionName) {
 
 def downloadBootstrap(String arch, String expectedChecksum, String version) {
     def digest = java.security.MessageDigest.getInstance("SHA-256")
-
-    def localUrl = "src/main/cpp/bootstrap-" + arch + ".zip"
-    def file = new File(projectDir, localUrl)
+    def file = new File(projectDir, "src/main/cpp/bootstrap-" + arch + ".zip")
     if (file.exists()) {
-        def buffer = new byte[8192]
-        def input = new FileInputStream(file)
-        while (true) {
-            def readBytes = input.read(buffer)
-            if (readBytes < 0) break
-            digest.update(buffer, 0, readBytes)
-        }
-        def checksum = new BigInteger(1, digest.digest()).toString(16)
+        def checksum = new BigInteger(1, digest.digest(file.bytes)).toString(16)
         while (checksum.length() < 64) { checksum = "0" + checksum }
         if (checksum == expectedChecksum) {
+            logger.quiet("Using existing " + file.getName())
             return
         } else {
-            logger.quiet("Deleting old local file with wrong hash: " + localUrl + ": expected: " + expectedChecksum + ", actual: " + checksum)
+            logger.quiet("Wrong checksum for existing " + file.getName() + ", downloading again")
             file.delete()
         }
     }
@@ -213,22 +203,14 @@ clean {
 task downloadBootstraps() {
     doLast {
         def packageVariant = project.ext.packageVariant
-        // custom bootstrap zip
         if (packageVariant == "apt.android-7") {
             def version = "2025.06.20-r1+apt.android-7"
             downloadBootstrap("aarch64", "4c1801cbbe666354c39e62be051d1b218c57b7a2f5bb4da8ac44c455f02161dc", version)
             downloadBootstrap("arm", "fb3246dad64b68ee13e452e039bc1afad00825c02fc5c214782c1c091ad6bbd0", version)
             downloadBootstrap("i686", "b92e3696299022ce03b34e3208f17ed8a02d8cb3762b4cd4c6f9fb988d0e4b22", version)
             downloadBootstrap("x86_64", "0474879e74b52edb6a40fe95e437d3b9afe841b2b5a54685ba0f61dbbe6d4410", version)
-        } else if (packageVariant == "apt-android-5") {
-            // This part seems correct based on standard termux-app builds
-            def version = "2022.04.28-r6" + "+" + packageVariant
-            downloadBootstrap("aarch64", "913609d439415c828c5640be1b0561467e539cb1c7080662decaaca2fb4820e7", version)
-            downloadBootstrap("arm", "26bfb45304c946170db69108e5eb6e3641aad751406ce106c80df80cad2eccf8", version)
-            downloadBootstrap("i686", "46dcfeb5eef67ba765498db9fe4c50dc4690805139aa0dd141a9d8ee0693cd27", version)
-            downloadBootstrap("x86_64", "615b590679ee6cd885b7fd2ff9473c845e920f9b422f790bb158c63fe42b8481", version)
         } else {
-            throw new GradleException("Unsupported TERMUX_PACKAGE_VARIANT \"" + packageVariant + "\"")
+            throw new GradleException("Unsupported TERMUX_PACKAGE_VARIANT \"" + packageVariant + "\". Only 'apt.android-7' is supported.")
         }
     }
 }

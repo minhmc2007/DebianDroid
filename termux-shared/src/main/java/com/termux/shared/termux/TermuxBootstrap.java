@@ -32,8 +32,9 @@ public class TermuxBootstrap {
 
         Logger.logVerbose(LOG_TAG, "Set TERMUX_APP_PACKAGE_VARIANT to \"" + TERMUX_APP_PACKAGE_VARIANT + "\"");
 
-        // Set packageManagerName to substring before first dash "-" in packageVariantName
-        int index = packageVariantName.indexOf('-');
+        // Set packageManagerName to substring before first dot "." in packageVariantName
+        // THIS IS THE CORRECTED LOGIC
+        int index = packageVariantName.indexOf('.');
         String packageManagerName = (index == -1) ? null : packageVariantName.substring(0, index);
         TERMUX_APP_PACKAGE_MANAGER = PackageManager.managerOf(packageManagerName);
         if (TERMUX_APP_PACKAGE_MANAGER == null) {
@@ -86,16 +87,6 @@ public class TermuxBootstrap {
         return PackageManager.APT.equals(TERMUX_APP_PACKAGE_MANAGER);
     }
 
-    ///** Is {@link PackageManager#TAPM} set as {@link #TERMUX_APP_PACKAGE_MANAGER}. */
-    //public static boolean isAppPackageManagerTAPM() {
-    //    return PackageManager.TAPM.equals(TERMUX_APP_PACKAGE_MANAGER);
-    //}
-
-    ///** Is {@link PackageManager#PACMAN} set as {@link #TERMUX_APP_PACKAGE_MANAGER}. */
-    //public static boolean isAppPackageManagerPACMAN() {
-    //    return PackageManager.PACMAN.equals(TERMUX_APP_PACKAGE_MANAGER);
-    //}
-
 
 
     /** Is {@link PackageVariant#APT_ANDROID_7} set as {@link #TERMUX_APP_PACKAGE_VARIANT}. */
@@ -103,20 +94,10 @@ public class TermuxBootstrap {
         return PackageVariant.APT_ANDROID_7.equals(TERMUX_APP_PACKAGE_VARIANT);
     }
 
-    /** Is {@link PackageVariant#APT_ANDROID_5} set as {@link #TERMUX_APP_PACKAGE_VARIANT}. */
-    public static boolean isAppPackageVariantAPTAndroid5() {
-        return PackageVariant.APT_ANDROID_5.equals(TERMUX_APP_PACKAGE_VARIANT);
-    }
-
-    ///** Is {@link PackageVariant#TAPM_ANDROID_7} set as {@link #TERMUX_APP_PACKAGE_VARIANT}. */
-    //public static boolean isAppPackageVariantTAPMAndroid7() {
-    //    return PackageVariant.TAPM_ANDROID_7.equals(TERMUX_APP_PACKAGE_VARIANT);
-    //}
-
-    ///** Is {@link PackageVariant#PACMAN_ANDROID_7} set as {@link #TERMUX_APP_PACKAGE_VARIANT}. */
-    //public static boolean isAppPackageVariantTPACMANAndroid7() {
-    //    return PackageVariant.PACMAN_ANDROID_7.equals(TERMUX_APP_PACKAGE_VARIANT);
-    //}
+    // This method is now removed since Android 5 variant is no longer supported
+    // public static boolean isAppPackageVariantAPTAndroid5() {
+    //     return PackageVariant.APT_ANDROID_5.equals(TERMUX_APP_PACKAGE_VARIANT);
+    // }
 
 
 
@@ -129,19 +110,6 @@ public class TermuxBootstrap {
          * https://wiki.debian.org/deb
          */
         APT("apt");
-
-        ///**
-        // * Termux Android Package Manager (TAPM) for managing termux apk package files.
-        // * https://en.wikipedia.org/wiki/Apk_(file_format)
-        // */
-        //TAPM("tapm");
-
-        ///**
-        // * Package Manager (PACMAN) for managing arch linux pkg.tar package files.
-        // * https://wiki.archlinux.org/title/pacman
-        // * https://en.wikipedia.org/wiki/Arch_Linux#Pacman
-        // */
-        //PACMAN("pacman");
 
         private final String name;
 
@@ -173,20 +141,14 @@ public class TermuxBootstrap {
 
 
 
-    /** Termux package variant. The substring before first dash "-" must match one of the {@link PackageManager}. */
+    /** Termux package variant. The substring before first dot "." must match one of the {@link PackageManager}. */
     public enum PackageVariant {
 
         /** {@link PackageManager#APT} variant for Android 7+. */
-        APT_ANDROID_7("apt.android-7"),
+        APT_ANDROID_7("apt.android-7");
 
-        /** {@link PackageManager#APT} variant for Android 5+. */
-        APT_ANDROID_5("apt-android-5");
-
-        ///** {@link PackageManager#TAPM} variant for Android 7+. */
-        //TAPM_ANDROID_7("tapm-android-7");
-
-        ///** {@link PackageManager#PACMAN} variant for Android 7+. */
-        //PACMAN_ANDROID_7("pacman-android-7");
+        // The Android 5 variant has been removed
+        // APT_ANDROID_5("apt-android-5");
 
         private final String name;
 
@@ -213,7 +175,5 @@ public class TermuxBootstrap {
             }
             return null;
         }
-
     }
-
 }
